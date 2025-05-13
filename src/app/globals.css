@@ -25,7 +25,7 @@
     --secondary: 200 17% 94%; /* #ecf0f1 */
     --secondary-foreground: 210 10% 23%; /* Dark text on secondary */
 
-    --accent: 145 63% 49%; /* #2ecc71 */
+    --accent: 40 89% 60%; /* Orange */
     --accent-foreground: 0 0% 100%; /* White text on accent */
 
     --destructive: 0 84.2% 60.2%;
@@ -35,7 +35,7 @@
     --radius: 0.5rem;
 
     --chart-1: 207 68% 53%; /* Primary Blue */
-    --chart-2: 145 63% 49%; /* Accent Green */
+    --chart-2: 40 89% 60%; /* Orange for "Pago" status (changed from green) */
     --chart-3: 40 89% 60%; /* Orange */
     --chart-4: 260 80% 65%; /* Purple */
     --chart-5: 30 80% 55%;
@@ -72,7 +72,7 @@
     --secondary: 210 10% 20%;
     --secondary-foreground: 0 0% 95%;
 
-    --accent: 145 63% 49%;
+    --accent: 40 89% 60%; /* Orange */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72.2% 50.6%;
@@ -81,7 +81,7 @@
     --ring: 207 68% 53%;
 
     --chart-1: 207 68% 53%;
-    --chart-2: 145 63% 49%;
+    --chart-2: 40 89% 60%; /* Orange for "Pago" status (changed from green) */
     --chart-3: 40 89% 60%;
     --chart-4: 260 80% 65%;
     --chart-5: 30 80% 55%;

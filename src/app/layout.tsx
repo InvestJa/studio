@@ -5,9 +5,6 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { APP_NAME } from '@/lib/constants';
 
-const geistSans = GeistSans;
-const geistMono = GeistMono;
-
 export const metadata: Metadata = {
   title: {
     default: APP_NAME,
@@ -23,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
         {children}
         <Toaster />
       </body>

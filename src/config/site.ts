@@ -16,12 +16,10 @@ export const mainNavItems: NavItem[] = [
     title: 'Pagamentos',
     href: '/payments',
     icon: CreditCard,
-    disabled: true, // Example of a disabled item
   },
   {
     title: 'Configurações',
     href: '/settings',
     icon: Settings,
-    disabled: true,
   },
 ];

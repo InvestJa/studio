@@ -19,7 +19,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!isAuthenticated && pathname.startsWith('/dashboard') || !isAuthenticated && pathname.startsWith('/clients')) {
+  // Simplified conditional logic
+  if (!isAuthenticated && (pathname.startsWith('/dashboard') || pathname.startsWith('/clients') || pathname.startsWith('/payments') || pathname.startsWith('/settings'))) {
     let from = pathname;
     if (request.nextUrl.search) {
       from += request.nextUrl.search;

@@ -18,7 +18,7 @@ import type { PaymentStatusData } from "@/types"
 import { Skeleton } from "../ui/skeleton"
 
 const chartData: PaymentStatusData[] = [
-  { status: "Pago", count: 250, fill: "hsl(var(--chart-2))" }, // Green
+  { status: "Pago", count: 250, fill: "hsl(var(--chart-2))" }, // Uses updated --chart-2 (orange)
   { status: "Pendente", count: 100, fill: "hsl(var(--chart-3))" }, // Orange
   { status: "Atrasado", count: 50, fill: "hsl(var(--destructive))" }, // Red
 ];
