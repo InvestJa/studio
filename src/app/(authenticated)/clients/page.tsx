@@ -1,7 +1,7 @@
 "use client"; // This page needs client-side interactivity for dialogs and table
 
-import ** as React from 'react';
-import type { Metadata } from 'next'; // Metadata can still be defined but will be static here
+import * as React from 'react';
+// import type { Metadata } from 'next'; // Metadata can still be defined but will be static here
 import { ClientDataTable } from '@/components/clients/client-data-table';
 import { getClientColumns } from '@/components/clients/client-table-columns';
 import type { Client } from '@/types';
@@ -74,7 +74,7 @@ export default function ClientsPage() {
     setIsViewDialogOpen(true);
   };
   
-  const columns = React.useMemo(() => getClientColumns(handleEditClient, handleViewClient), []);
+  const columns = React.useMemo(() => getClientColumns(handleEditClient, handleViewClient), [handleEditClient, handleViewClient]);
 
   return (
     <div className="space-y-6">

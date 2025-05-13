@@ -19,7 +19,7 @@ import { Skeleton } from "../ui/skeleton"
 
 const chartData: PaymentStatusData[] = [
   { status: "Pago", count: 250, fill: "hsl(var(--chart-2))" }, // Uses updated --chart-2 (orange)
-  { status: "Pendente", count: 100, fill: "hsl(var(--chart-3))" }, // Orange
+  { status: "Pendente", count: 100, fill: "hsl(var(--chart-3))" }, // Softer Orange
   { status: "Atrasado", count: 50, fill: "hsl(var(--destructive))" }, // Red
 ];
 
