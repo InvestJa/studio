@@ -9,6 +9,10 @@ export default {
   ],
   theme: {
   	extend: {
+      fontFamily: {
+        sans: ["var(--font-geist-sans)"],
+        mono: ["var(--font-geist-mono)"],
+      },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -82,11 +86,17 @@ export default {
   				to: {
   					height: '0'
   				}
-  			}
+  			},
+        'spin-slow': { // For placeholder icons if needed
+          'to': {
+            transform: 'rotate(360deg)',
+          },
+        },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+        'spin-slow': 'spin 3s linear infinite',
   		}
   	}
   },
