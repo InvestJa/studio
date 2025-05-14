@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DataTableViewOptions } from "@/components/clients/data-table-view-options"; // Reusing
 import type { Payment } from "@/types";
+import { Icons } from "@/components/icons"; // Added import here
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
