@@ -2,90 +2,95 @@
 "use client";
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import type { Payment, PaymentStatistics, Client } from '@/types';
+import type { Payment, PaymentStatistics, Client, PaymentFormValues } from '@/types';
 import { PaymentDataTable } from '@/components/payments/payment-data-table';
 import { getPaymentColumns } from '@/components/payments/payment-table-columns';
 import { AddPaymentDialog } from '@/components/payments/add-payment-dialog';
 import { ViewPaymentDialog } from '@/components/payments/view-payment-dialog';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock client data to associate with payments - in a real app, this might come from a shared store or context
-const mockClients: Pick<Client, 'id' | 'name'>[] = [
-    { id: 'cl001', name: 'Ana Silva'},
-    { id: 'cl002', name: 'Bruno Costa'},
-    { id: 'cl003', name: 'Carla Dias'},
-    { id: 'cl004', name: 'Daniel Oliveira'},
-    { id: 'cl005', name: 'Eduarda Ferreira'},
-];
-
-// Mock data fetching. In a real app, this would be an API call.
-async function getPayments(): Promise<Payment[]> {
-  await new Promise(resolve => setTimeout(resolve, 700)); // Simulate delay
-  return [
-    { id: 'pay001', clientId: 'cl001', clientName: 'Ana Silva', date: new Date('2024-05-15'), amount: 470, method: 'PIX', status: 'Pago' },
-    { id: 'pay002', clientId: 'cl002', clientName: 'Bruno Costa', date: new Date('2024-05-10'), amount: 460, method: 'Boleto', status: 'Pendente' },
-    { id: 'pay003', clientId: 'cl003', clientName: 'Carla Dias', date: new Date('2024-04-20'), amount: 450, method: 'Cartão de Crédito', status: 'Pago' },
-    { id: 'pay004', clientId: 'cl001', clientName: 'Ana Silva', date: new Date('2024-04-15'), amount: 470, method: 'PIX', status: 'Atrasado' },
-    { id: 'pay005', clientId: 'cl004', clientName: 'Daniel Oliveira', date: new Date('2024-05-01'), amount: 500, method: 'PIX', status: 'Falhou' },
-    { id: 'pay006', clientId: 'cl005', clientName: 'Eduarda Ferreira', date: new Date('2024-03-25'), amount: 520, method: 'Boleto', status: 'Pago' },
-    { id: 'pay007', clientId: 'cl002', clientName: 'Bruno Costa', date: new Date('2024-04-10'), amount: 460, method: 'Boleto', status: 'Pago' },
-  ];
-}
-
-async function getPaymentStatistics(payments: Payment[]): Promise<PaymentStatistics> {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  const totalPaid = payments.filter(p => p.status === 'Pago').reduce((sum, p) => sum + p.amount, 0);
-  const totalPending = payments.filter(p => p.status === 'Pendente').reduce((sum, p) => sum + p.amount, 0);
-  const totalOverdue = payments.filter(p => p.status === 'Atrasado').reduce((sum, p) => sum + p.amount, 0);
-  
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const paymentsLast30Days = payments.filter(p => new Date(p.date) >= thirtyDaysAgo).length;
-
-  return { totalPaid, totalPending, totalOverdue, paymentsLast30Days };
-}
-
+import { 
+  getAllPayments, 
+  addPayment as addPaymentToDb, 
+  updatePayment as updatePaymentInDb, 
+  getPaymentStatisticsFromDb,
+  getAllClients 
+} from '@/lib/mock-db';
 
 export default function PaymentsPage() {
+  const router = useRouter();
   const [payments, setPayments] = React.useState<Payment[]>([]);
+  const [clients, setClients] = React.useState<Pick<Client, 'id' | 'name'>[]>([]);
   const [statistics, setStatistics] = React.useState<PaymentStatistics | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = React.useState(false);
   const [selectedPayment, setSelectedPayment] = React.useState<Payment | null>(null);
-  const [editingPayment, setEditingPayment] = React.useState<Payment | null>(null); // For future edit functionality
+  const [editingPayment, setEditingPayment] = React.useState<Payment | null>(null);
   const { toast } = useToast();
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const [paymentData, statsData, clientData] = await Promise.all([
+        getAllPayments(),
+        getPaymentStatisticsFromDb(),
+        getAllClients().then(cls => cls.map(c => ({ id: c.id, name: c.name })))
+      ]);
+      setPayments(paymentData);
+      setStatistics(statsData);
+      setClients(clientData);
+    } catch (error) {
+      toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar os pagamentos ou estatísticas.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   React.useEffect(() => {
     document.title = "Gerenciamento de Pagamentos | Crédito Simples";
-    async function loadData() {
-      setIsLoading(true);
-      const paymentData = await getPayments();
-      setPayments(paymentData);
-      const stats = await getPaymentStatistics(paymentData);
-      setStatistics(stats);
-      setIsLoading(false);
-    }
-    loadData();
+    fetchData();
   }, []);
 
-  const handleAddOrUpdatePayment = (payment: Payment) => {
-    // For now, just adds to the list or updates. A real app would POST/PUT to an API.
-    if (editingPayment) {
-      setPayments(prev => prev.map(p => p.id === payment.id ? payment : p));
-      toast({ title: "Pagamento Atualizado!", description: `Pagamento de ${payment.clientName} atualizado.` });
-    } else {
-      const newPaymentWithId = { ...payment, id: `pay${Math.random().toString(16).slice(2)}`};
-      setPayments(prev => [newPaymentWithId, ...prev]);
-      toast({ title: "Pagamento Adicionado!", description: `Novo pagamento para ${payment.clientName} registrado.` });
-    }
-    setEditingPayment(null);
-    // Update statistics after adding/updating
-    getPaymentStatistics([editingPayment ? payments.map(p => p.id === payment.id ? payment : p) : payment, ...payments]).then(setStatistics);
+  const handleAddOrUpdatePayment = async (values: PaymentFormValues) => {
+    try {
+      const client = clients.find(c => c.id === values.clientId);
+      if (!client) {
+        toast({ title: "Erro", description: "Cliente não encontrado.", variant: "destructive" });
+        return;
+      }
 
+      if (editingPayment) {
+        const paymentToUpdate: Payment = {
+            ...editingPayment,
+            ...values,
+            clientName: client.name, 
+            date: new Date(values.date), // Ensure date is a Date object
+            amount: Number(values.amount) // Ensure amount is a number
+        };
+        await updatePaymentInDb(paymentToUpdate);
+        toast({ title: "Pagamento Atualizado!", description: `Pagamento para ${client.name} atualizado.` });
+      } else {
+        const paymentToAdd: Omit<Payment, 'id' | 'clientName'> & { clientId: string } = {
+            clientId: values.clientId,
+            date: new Date(values.date),
+            amount: Number(values.amount),
+            method: values.method,
+            status: values.status,
+        };
+        await addPaymentToDb(paymentToAdd);
+        toast({ title: "Pagamento Adicionado!", description: `Novo pagamento para ${client.name} registrado.` });
+      }
+      await fetchData(); // Refresh data
+      setEditingPayment(null);
+      setIsAddDialogOpen(false);
+      // router.refresh(); // Re-run server components if necessary
+    } catch (error) {
+      toast({ title: "Erro", description: `Falha ao salvar pagamento: ${error instanceof Error ? error.message : 'Erro desconhecido'}`, variant: "destructive" });
+    }
   };
 
   const handleOpenAddDialog = () => {
@@ -94,10 +99,8 @@ export default function PaymentsPage() {
   };
   
   const handleEditPayment = (payment: Payment) => {
-    // For now, this will just open the add dialog with prefilled data (if implemented)
     setEditingPayment(payment);
     setIsAddDialogOpen(true); 
-    toast({ title: "Editar Pagamento", description: "Funcionalidade de edição de pagamento em desenvolvimento."});
   };
 
   const handleViewPayment = (payment: Payment) => {
@@ -105,13 +108,17 @@ export default function PaymentsPage() {
     setIsViewDialogOpen(true);
   };
 
-  const handleUpdatePaymentStatus = (payment: Payment, status: Payment['status']) => {
-    setPayments(prev => prev.map(p => p.id === payment.id ? {...p, status} : p));
-    getPaymentStatistics(payments.map(p => p.id === payment.id ? {...p, status} : p)).then(setStatistics);
-    toast({ title: "Status do Pagamento Atualizado!", description: `Pagamento de ${payment.clientName} marcado como ${status}.` });
+  const handleUpdatePaymentStatus = async (payment: Payment, status: Payment['status']) => {
+    try {
+      await updatePaymentInDb({ ...payment, status });
+      await fetchData(); // Refresh data
+      toast({ title: "Status do Pagamento Atualizado!", description: `Pagamento de ${payment.clientName} marcado como ${status}.` });
+    } catch (error) {
+       toast({ title: "Erro", description: "Falha ao atualizar status do pagamento.", variant: "destructive" });
+    }
   }
   
-  const columns = React.useMemo(() => getPaymentColumns(handleEditPayment, handleViewPayment, handleUpdatePaymentStatus), []);
+  const columns = React.useMemo(() => getPaymentColumns(handleEditPayment, handleViewPayment, handleUpdatePaymentStatus), [clients]);
 
 
   return (
@@ -135,7 +142,7 @@ export default function PaymentsPage() {
         <MetricCard
           title="Total Pendente"
           value={statistics ? `R$ ${statistics.totalPending.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Carregando..."}
-          icon={Icons.dollarSign} // Consider Icons.hourglass or similar
+          icon={Icons.dollarSign} 
           isLoading={isLoading && !statistics}
           description="Soma dos pagamentos 'Pendentes'"
         />
@@ -160,9 +167,9 @@ export default function PaymentsPage() {
       <AddPaymentDialog 
         isOpen={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onPaymentAdded={handleAddOrUpdatePayment} // This should take a partial Payment or a specific form type
+        onSave={handleAddOrUpdatePayment}
         editingPayment={editingPayment}
-        clients={mockClients} // Pass mock clients for selection
+        clients={clients} 
       />
       <ViewPaymentDialog
         isOpen={isViewDialogOpen}

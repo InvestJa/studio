@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Icons } from '@/components/icons';
 import { MetricCard } from '@/components/dashboard/metric-card';
@@ -6,35 +7,25 @@ import { PaymentStatusPieChart } from '@/components/dashboard/payment-status-pie
 import type { DashboardMetrics } from '@/types';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getDashboardDataFromDb } from '@/lib/mock-db'; // Import from mock-db
 
 export const metadata: Metadata = {
   title: 'Dashboard',
 };
 
-// Mock data fetching function
-async function getDashboardMetrics(): Promise<DashboardMetrics> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return {
-    totalClients: 125,
-    totalLoanedAmount: 575000.00,
-    totalOutstandingAmount: 230000.00,
-    defaultRate: 5.2,
-  };
-}
-
 // Server component to fetch and display metrics
 async function MetricsSection() {
-  const metrics = await getDashboardMetrics();
+  // Fetch metrics from our mock DB
+  const metrics = await getDashboardDataFromDb(); 
   return (
     <>
       <MetricCard
         title="Total de Clientes"
         value={metrics.totalClients}
         icon={Icons.clients}
-        description="+20.1% desde o último mês"
+        description="+20.1% desde o último mês" // Trend description kept for UI, actual trend calculation not implemented in mock-db
         trend="up"
-        trendValue="+25 novos clientes"
+        trendValue="+25 novos clientes" // Static trend value
       />
       <MetricCard
         title="Total Emprestado"
@@ -42,21 +33,21 @@ async function MetricsSection() {
         icon={Icons.dollarSign}
         description="+15% desde o último mês"
         trend="up"
-        trendValue="+ R$ 75.000,00"
+        trendValue="+ R$ 75.000,00" // Static trend value
       />
       <MetricCard
         title="Saldo Pendente Total"
         value={`R$ ${metrics.totalOutstandingAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-        icon={Icons.dollarSign} // Could be a different icon for outstanding
-        description="Atualizado em tempo real"
+        icon={Icons.dollarSign} 
+        description="Atualizado com base nos dados"
       />
       <MetricCard
         title="Taxa de Inadimplência"
         value={`${metrics.defaultRate.toFixed(1)}%`}
         icon={Icons.warning}
-        description="-1.5% desde o último mês"
+        description="-1.5% desde o último mês" // Static trend description
         trend="down"
-        trendValue="Redução de 1.5%"
+        trendValue="Redução de 1.5%" // Static trend value
       />
     </>
   );
@@ -77,7 +68,6 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        {/* Potential actions like "Generate Report" can go here */}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -89,16 +79,17 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
         <div className="lg:col-span-4">
            <Suspense fallback={<LoansOverviewChart isLoading />}>
+            {/* LoansOverviewChart might need to be updated if its data should also be dynamic from mock-db */}
             <LoansOverviewChart />
           </Suspense>
         </div>
         <div className="lg:col-span-3">
           <Suspense fallback={<PaymentStatusPieChart isLoading />}>
+            {/* PaymentStatusPieChart might need to be updated if its data should also be dynamic from mock-db */}
             <PaymentStatusPieChart />
           </Suspense>
         </div>
       </div>
-       {/* Placeholder for recent activity or alerts */}
       <div className="grid gap-4">
         <div className="p-6 rounded-lg border bg-card text-card-foreground shadow-sm">
             <h3 className="text-xl font-semibold mb-3">Atividade Recente</h3>

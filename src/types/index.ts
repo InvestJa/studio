@@ -18,6 +18,16 @@ export interface Payment {
   status: 'Pago' | 'Pendente' | 'Atrasado' | 'Falhou';
 }
 
+// For the Payment Form
+export interface PaymentFormValues {
+  clientId: string;
+  amount: number; // Stored as number in form, converted from string
+  date: string; // Stored as string 'yyyy-mm-dd' in form
+  method: 'Cartão de Crédito' | 'Boleto' | 'PIX' | 'Dinheiro';
+  status: 'Pago' | 'Pendente' | 'Atrasado' | 'Falhou';
+}
+
+
 export interface Client {
   id: string;
   name: string;
@@ -28,9 +38,21 @@ export interface Client {
   loanTerm: number; // in months
   interestRate: number; // percentage
   outstandingBalance: number;
-  paymentHistory: Payment[]; // This might be simplified if payments are managed globally
+  paymentHistory: Payment[]; 
   registrationDate: Date;
 }
+
+// For the Client Form (from client-form.tsx)
+export interface ClientFormValues {
+  name: string;
+  email: string;
+  phone: string;
+  document: string;
+  loanAmount: number;
+  loanTerm: number;
+  interestRate: number;
+}
+
 
 export interface DashboardMetrics {
   totalClients: number;

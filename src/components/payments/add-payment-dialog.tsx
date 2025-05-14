@@ -11,100 +11,82 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-// import { PaymentForm, type PaymentFormValues } from "./payment-form"; // Future: use a dedicated form
 import { useToast } from "@/hooks/use-toast";
-import type { Payment, Client } from '@/types';
+import type { Payment, Client, PaymentFormValues } from '@/types';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+const paymentFormSchema = z.object({
+  clientId: z.string().min(1, "Cliente é obrigatório."),
+  amount: z.coerce.number().positive("Valor deve ser positivo."),
+  date: z.string().min(1, "Data é obrigatória."), // Will be converted to Date object before saving
+  method: z.enum(['PIX', 'Boleto', 'Cartão de Crédito', 'Dinheiro']),
+  status: z.enum(['Pendente', 'Pago', 'Atrasado', 'Falhou']),
+});
+
 
 interface AddPaymentDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onPaymentAdded: (newPayment: Payment) => void; 
+  onSave: (values: PaymentFormValues) => Promise<void>; 
   editingPayment?: Payment | null;
-  clients: Pick<Client, 'id' | 'name'>[]; // To select a client
+  clients: Pick<Client, 'id' | 'name'>[];
 }
 
-// Placeholder: In a real app, this would involve a proper form and validation.
 export function AddPaymentDialog({ 
     isOpen, 
     onOpenChange, 
-    onPaymentAdded, 
+    onSave, 
     editingPayment,
     clients 
 }: AddPaymentDialogProps) {
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
-  // Simplified state for a placeholder form
-  const [amount, setAmount] = React.useState(editingPayment?.amount.toString() || '');
-  const [selectedClientId, setSelectedClientId] = React.useState(editingPayment?.clientId || '');
-  const [paymentDate, setPaymentDate] = React.useState(editingPayment?.date ? editingPayment.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
-  const [paymentMethod, setPaymentMethod] = React.useState<Payment['method']>(editingPayment?.method || 'PIX');
-  const [paymentStatus, setPaymentStatus] = React.useState<Payment['status']>(editingPayment?.status || 'Pendente');
+  const { toast } = useToast(); // Keep for potential local messages if needed, parent handles save toasts
+  const [isSubmittingLocal, setIsSubmittingLocal] = React.useState(false);
 
+  const form = useForm<PaymentFormValues>({
+    resolver: zodResolver(paymentFormSchema),
+    defaultValues: {
+      clientId: '',
+      amount: 0,
+      date: new Date().toISOString().split('T')[0],
+      method: 'PIX',
+      status: 'Pendente',
+    }
+  });
 
   React.useEffect(() => {
-    if (editingPayment) {
-      setAmount(editingPayment.amount.toString());
-      setSelectedClientId(editingPayment.clientId);
-      setPaymentDate(editingPayment.date.toISOString().split('T')[0]);
-      setPaymentMethod(editingPayment.method);
-      setPaymentStatus(editingPayment.status);
-    } else {
-      // Reset form for new payment
-      setAmount('');
-      setSelectedClientId(clients.length > 0 ? clients[0].id : '');
-      setPaymentDate(new Date().toISOString().split('T')[0]);
-      setPaymentMethod('PIX');
-      setPaymentStatus('Pendente');
+    if (isOpen) {
+      if (editingPayment) {
+        form.reset({
+          clientId: editingPayment.clientId,
+          amount: editingPayment.amount,
+          date: editingPayment.date ? new Date(editingPayment.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          method: editingPayment.method,
+          status: editingPayment.status,
+        });
+      } else {
+        form.reset({
+          clientId: clients.length > 0 ? clients[0].id : '',
+          amount: 0,
+          date: new Date().toISOString().split('T')[0],
+          method: 'PIX',
+          status: 'Pendente',
+        });
+      }
     }
-  }, [editingPayment, isOpen, clients]);
+  }, [editingPayment, isOpen, clients, form]);
 
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    // Basic validation
-    if (!selectedClientId || !amount || !paymentDate) {
-        toast({ title: "Erro", description: "Por favor, preencha todos os campos obrigatórios.", variant: "destructive" });
-        setIsSubmitting(false);
-        return;
-    }
-    const client = clients.find(c => c.id === selectedClientId);
-    if (!client) {
-        toast({ title: "Erro", description: "Cliente inválido selecionado.", variant: "destructive" });
-        setIsSubmitting(false);
-        return;
-    }
-
-    try {
-      // Simulate saving
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const paymentData: Payment = {
-        id: editingPayment?.id || `pay-${Date.now()}`, // Use existing ID if editing
-        clientId: selectedClientId,
-        clientName: client.name,
-        amount: parseFloat(amount),
-        date: new Date(paymentDate),
-        method: paymentMethod,
-        status: paymentStatus,
-      };
-      onPaymentAdded(paymentData);
-      toast({
-        title: editingPayment ? "Pagamento Atualizado!" : "Pagamento Adicionado!",
-        description: `Pagamento para ${client.name} foi ${editingPayment ? 'atualizado' : 'adicionado'}.`,
-      });
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: "Erro ao salvar pagamento",
-        description: "Ocorreu um problema.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const onSubmit = async (values: PaymentFormValues) => {
+    setIsSubmittingLocal(true);
+    await onSave(values);
+    setIsSubmittingLocal(false);
+    // onOpenChange(false); // Parent should close dialog on success
   };
 
   return (
@@ -117,63 +99,108 @@ export function AddPaymentDialog({
           </DialogDescription>
         </DialogHeader>
         
-        {/* Placeholder Form - Replace with <PaymentForm /> when implemented */}
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="client" className="text-right">Cliente</Label>
-            <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecione um cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                    {clients.map(client => (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <FormField
+              control={form.control}
+              name="clientId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cliente</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um cliente" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {clients.map(client => (
                         <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount" className="text-right">Valor (R$)</Label>
-            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right">Data</Label>
-            <Input id="date" type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="col-span-3" />
-          </div>
-           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="method" className="text-right">Método</Label>
-            <Select value={paymentMethod} onValueChange={(value: Payment['method']) => setPaymentMethod(value)}>
-                <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecione o método" />
-                </SelectTrigger>
-                <SelectContent>
-                    {(['PIX', 'Boleto', 'Cartão de Crédito', 'Dinheiro'] as Payment['method'][]).map(method => (
-                        <SelectItem key={method} value={method}>{method}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">Status</Label>
-            <Select value={paymentStatus} onValueChange={(value: Payment['status']) => setPaymentStatus(value)}>
-                <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                    {(['Pendente', 'Pago', 'Atrasado', 'Falhou'] as Payment['status'][]).map(status => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancelar</Button>
-          <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Salvando..." : (editingPayment ? "Salvar Alterações" : "Adicionar Pagamento")}
-          </Button>
-        </DialogFooter>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Valor (R$)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="0.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="method"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Método</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o método" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(['PIX', 'Boleto', 'Cartão de Crédito', 'Dinheiro'] as Payment['method'][]).map(method => (
+                          <SelectItem key={method} value={method}>{method}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(['Pendente', 'Pago', 'Atrasado', 'Falhou'] as Payment['status'][]).map(status => (
+                          <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmittingLocal}>Cancelar</Button>
+              <Button type="submit" disabled={isSubmittingLocal}>
+                {isSubmittingLocal ? "Salvando..." : (editingPayment ? "Salvar Alterações" : "Adicionar Pagamento")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
