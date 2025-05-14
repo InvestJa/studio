@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { login } from '@/lib/auth'; // Mock auth function
 import { Icons } from '@/components/icons';
+import { cn } from '@/lib/utils'; // cn was used by the local spinner, ensure it's here if needed elsewhere or remove if not.
 
 const loginFormSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
@@ -108,22 +109,3 @@ export function LoginForm() {
     </Form>
   );
 }
-
-// Add a spinner icon to Icons if not already present
-Icons.spinner = ({ className, ...props }: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={cn("animate-spin", className)}
-    {...props}
-  >
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-  </svg>
-);
