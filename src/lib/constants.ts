@@ -1,1 +1,2 @@
-export const APP_NAME = 'Crédito Simples';
+export const APP_NAME = 'InvestJá';
+
