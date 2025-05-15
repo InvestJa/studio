@@ -100,7 +100,7 @@ export default function SettingsPage() {
               </Alert>
             )}
             {location && (
-              <div className="p-4 border rounded-md bg-secondary">
+              <div className="p-4 border rounded-md bg-secondary shadow-sm">
                 <p className="text-sm font-medium">
                   Latitude: <span className="font-normal text-foreground">{location.latitude?.toFixed(6)}</span>
                 </p>
