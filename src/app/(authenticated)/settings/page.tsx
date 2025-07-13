@@ -24,15 +24,18 @@ export default function SettingsPage() {
   const [location, setLocation] = React.useState<LocationState | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [isClient, setIsClient] = React.useState<boolean>(false);
   const { toast } = useToast();
 
   React.useEffect(() => {
     // Set document title (client-side equivalent of metadata title for this page)
     document.title = "Configurações | InvestJá";
+    // Set client flag to true once component mounts on client
+    setIsClient(true);
   }, []);
 
   const handleGetLocation = () => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    if (!isClient || typeof navigator === 'undefined' || !navigator.geolocation) {
       setError("Geolocalização não é suportada pelo seu navegador.");
       toast({
         title: "Erro de Geolocalização",
