@@ -1,6 +1,5 @@
 "use client";
 
-import type { Metadata } from 'next';
 import * as React from 'react';
 import { Icons } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
