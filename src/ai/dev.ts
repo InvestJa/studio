@@ -1,1 +1,2 @@
-// Flows will be imported for their side effects in this file.
+// This file can be removed as it's not being used
+// Keeping it minimal to avoid breaking any potential imports
