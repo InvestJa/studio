@@ -32,7 +32,7 @@ export default function SettingsPage() {
   }, []);
 
   const handleGetLocation = () => {
-    if (!navigator.geolocation) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setError("Geolocalização não é suportada pelo seu navegador.");
       toast({
         title: "Erro de Geolocalização",
