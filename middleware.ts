@@ -1,4 +1,3 @@
-import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -17,45 +16,12 @@ function addSecurityHeaders(response: NextResponse) {
   return response
 }
 
-export default withAuth(
-  function middleware(req: NextRequest) {
-    const response = NextResponse.next()
-    
-    // Add security headers to all responses
-    return addSecurityHeaders(response)
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl
-        
-        // Public routes that don't require authentication
-        const publicRoutes = ['/login', '/signup', '/api/auth']
-        const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
-        
-        if (isPublicRoute) {
-          return true
-        }
-        
-        // API routes require authentication
-        if (pathname.startsWith('/api/')) {
-          return !!token
-        }
-        
-        // Protected routes require authentication
-        const protectedRoutes = ['/dashboard', '/clients', '/payments', '/settings']
-        const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-        
-        if (isProtectedRoute) {
-          return !!token
-        }
-        
-        // Default: allow access
-        return true
-      },
-    },
-  }
-)
+export function middleware(req: NextRequest) {
+  const response = NextResponse.next()
+  
+  // Add security headers to all responses
+  return addSecurityHeaders(response)
+}
 
 export const config = {
   matcher: [

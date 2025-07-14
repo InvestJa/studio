@@ -5,8 +5,6 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { APP_NAME } from '@/lib/constants';
 import { ThemeProvider } from '@/components/providers/theme-provider';
-import { AuthSessionProvider } from '@/components/providers/session-provider';
-import { ErrorBoundary } from '@/components/error-boundary';
 
 export const metadata: Metadata = {
   title: {
@@ -24,19 +22,15 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${GeistSans.variable} font-sans antialiased`}>
-        <ErrorBoundary>
-          <AuthSessionProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-              <Toaster />
-            </ThemeProvider>
-          </AuthSessionProvider>
-        </ErrorBoundary>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

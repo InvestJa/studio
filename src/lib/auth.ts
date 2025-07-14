@@ -1,67 +1,69 @@
-import { NextAuthOptions } from 'next-auth'
-import { PrismaAdapter } from '@next-auth/prisma-adapter'
-import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
-import { prisma } from './prisma'
+// Mock auth for deployment without database
+interface AuthResult {
+  success: boolean;
+  error?: string;
+}
 
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
-
-        if (!user || !user.password) {
-          return null
-        }
-
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        }
-      }
-    })
-  ],
-  session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.sub!
-        session.user.role = token.role as string
-      }
-      return session
-    },
-  },
-  pages: {
-    signIn: '/login',
-    signUp: '/signup',
-  },
+export async function signup(email: string, password: string): Promise<AuthResult> {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Simple validation
+  if (!email || !password) {
+    return { success: false, error: 'Email e senha são obrigatórios' };
+  }
+  
+  if (password.length < 8) {
+    return { success: false, error: 'Senha deve ter pelo menos 8 caracteres' };
+  }
+  
+  // Set session
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userEmail', email);
+  }
+  
+  return { success: true };
+}
+// Mock authentication functions for demo
+export async function logout(): Promise<void> {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userEmail');
+  }
+}
+export async function login(email: string, password: string): Promise<AuthResult> {
+export function isAuthenticated(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('isAuthenticated') === 'true';
+}
+  // Simulate API delay
+export function getCurrentUser() {
+  if (typeof window === 'undefined') return null;
+  const email = localStorage.getItem('userEmail');
+  return email ? { email, name: 'Demo User' } : null;
+}
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Demo credentials
+  const validCredentials = [
+    { email: 'admin@investja.com', password: 'admin123!@#' },
+    { email: 'demo@investja.com', password: 'demo123!@#' },
+    { email: 'user@example.com', password: 'password123' }
+  ];
+  
+  const isValid = validCredentials.some(
+    cred => cred.email === email && cred.password === password
+  );
+  
+  if (isValid) {
+    // Set a simple session flag
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('userEmail', email);
+    }
+    return { success: true };
+  }
+  
+  return { success: false, error: 'Credenciais inválidas' };
 }

@@ -53,13 +53,14 @@
     "next-themes": "^0.2.1",
     "nodemailer": "^6.10.1",
     "react": "^18.2.0",
-    "react-day-picker": "^8.9.1",
+    "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.48.2",
     "recharts": "^2.8.0",
     "sharp": "^0.34.3",
     "tailwind-merge": "^2.1.0",
     "tailwindcss-animate": "^1.0.7",
+    "winston": "^3.17.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
