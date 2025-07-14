@@ -28,7 +28,6 @@ import {
   MapPin,
   Briefcase,
 } from 'lucide-react';
-import type { SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 
 export const Icons = {
@@ -60,7 +59,7 @@ export const Icons = {
   mail: Mail,
   bell: Bell,
   mapPin: MapPin,
-  spinner: ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+  spinner: ({ className, ...props }) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="24"

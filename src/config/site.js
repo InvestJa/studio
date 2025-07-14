@@ -1,7 +1,6 @@
-import type { NavItem } from '@/types';
 import { LayoutDashboard, Users, Settings, CreditCard } from 'lucide-react';
 
-export const mainNavItems: NavItem[] = [
+export const mainNavItems = [
   {
     title: 'Dashboard',
     href: '/dashboard',

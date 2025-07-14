@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
 // Security headers
-function addSecurityHeaders(response: NextResponse) {
+function addSecurityHeaders(response) {
   response.headers.set('X-DNS-Prefetch-Control', 'on')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('X-Frame-Options', 'DENY')
@@ -16,7 +15,7 @@ function addSecurityHeaders(response: NextResponse) {
   return response
 }
 
-export function middleware(req: NextRequest) {
+export function middleware(req) {
   const response = NextResponse.next()
   
   // Add security headers to all responses
