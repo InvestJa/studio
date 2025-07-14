@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    serverComponentsExternalPackages: ['sharp', 'multer'],
+  },
   images: {
     remotePatterns: [
       {
@@ -17,6 +20,18 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  // Ensure logs directory exists
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      const fs = require('fs')
+      const path = require('path')
+      const logsDir = path.join(process.cwd(), 'logs')
+      if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true })
+      }
+    }
+    return config
   },
 };
 

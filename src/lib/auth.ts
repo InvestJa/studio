@@ -1,49 +1,67 @@
-// Mock authentication functions
-// In a real app, this would interact with Firebase Auth
+import { NextAuthOptions } from 'next-auth'
+import { PrismaAdapter } from '@next-auth/prisma-adapter'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import bcrypt from 'bcryptjs'
+import { prisma } from './prisma'
 
-// Simulate a token for middleware
-const MOCK_AUTH_TOKEN_COOKIE = 'mockAuthToken';
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
 
-export async function login(email: string, password_do_not_matters: string): Promise<{ success: boolean; error?: string; token?: string }> {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  if (email === 'user@example.com') {
-    // Simulate setting a cookie or session token
-    if (typeof document !== 'undefined') {
-        document.cookie = `${MOCK_AUTH_TOKEN_COOKIE}=fake-jwt-token;path=/;max-age=3600`;
-    }
-    return { success: true, token: 'fake-jwt-token' };
-  }
-  return { success: false, error: 'Credenciais inválidas. Use user@example.com.' };
-}
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email }
+        })
 
-export async function signup(email: string, password_do_not_matters: string): Promise<{ success: boolean; error?: string }> {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  if (email.includes('existing')) {
-      return { success: false, error: 'Este e-mail já está em uso.' };
-  }
-  // Simulate setting a cookie or session token
-  if (typeof document !== 'undefined') {
-      document.cookie = `${MOCK_AUTH_TOKEN_COOKIE}=fake-jwt-token;path=/;max-age=3600`;
-  }
-  return { success: true };
-}
+        if (!user || !user.password) {
+          return null
+        }
 
-export async function logout(): Promise<void> {
-  if (typeof document !== 'undefined') {
-    document.cookie = `${MOCK_AUTH_TOKEN_COOKIE}=;path=/;max-age=0`;
-  }
-  // In a real app, you would also call Firebase's signOut method
-}
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 
-export function getAuthToken(): string | undefined {
-  if (typeof document === 'undefined') return undefined;
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [name, value] = cookie.split('=').map(c => c.trim());
-    if (name === MOCK_AUTH_TOKEN_COOKIE) {
-      return value;
-    }
-  }
-  return undefined;
+        if (!isPasswordValid) {
+          return null
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        }
+      }
+    })
+  ],
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.sub!
+        session.user.role = token.role as string
+      }
+      return session
+    },
+  },
+  pages: {
+    signIn: '/login',
+    signUp: '/signup',
+  },
 }

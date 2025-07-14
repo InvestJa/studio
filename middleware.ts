@@ -1,52 +1,70 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { withAuth } from 'next-auth/middleware'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-const AUTH_TOKEN_COOKIE_NAME = 'mockAuthToken'; // Same as in lib/auth.ts
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const authToken = request.cookies.get(AUTH_TOKEN_COOKIE_NAME)?.value;
-
-  const isAuthenticated = !!authToken;
-
-  const authRoutes = ['/login', '/signup'];
-  const isAuthRoute = authRoutes.includes(pathname);
-
-  if (isAuthRoute) {
-    if (isAuthenticated) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return NextResponse.next();
-  }
-
-  // Simplified conditional logic
-  if (!isAuthenticated && (pathname.startsWith('/dashboard') || pathname.startsWith('/clients') || pathname.startsWith('/payments') || pathname.startsWith('/settings'))) {
-    let from = pathname;
-    if (request.nextUrl.search) {
-      from += request.nextUrl.search;
-    }
-    return NextResponse.redirect(new URL(`/login?from=${encodeURIComponent(from)}`, request.url));
-  }
+// Security headers
+function addSecurityHeaders(response: NextResponse) {
+  response.headers.set('X-DNS-Prefetch-Control', 'on')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'origin-when-cross-origin')
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
+  )
   
-  if (pathname === '/') {
-     if (isAuthenticated) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-     }
-     return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  return NextResponse.next();
+  return response
 }
+
+export default withAuth(
+  function middleware(req: NextRequest) {
+    const response = NextResponse.next()
+    
+    // Add security headers to all responses
+    return addSecurityHeaders(response)
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl
+        
+        // Public routes that don't require authentication
+        const publicRoutes = ['/login', '/signup', '/api/auth']
+        const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+        
+        if (isPublicRoute) {
+          return true
+        }
+        
+        // API routes require authentication
+        if (pathname.startsWith('/api/')) {
+          return !!token
+        }
+        
+        // Protected routes require authentication
+        const protectedRoutes = ['/dashboard', '/clients', '/payments', '/settings']
+        const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+        
+        if (isProtectedRoute) {
+          return !!token
+        }
+        
+        // Default: allow access
+        return true
+      },
+    },
+  }
+)
 
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
-};
+}
