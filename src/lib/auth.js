@@ -1,5 +1,7 @@
 // Real authentication with SQLite database
+"use server";
 import bcrypt from 'bcryptjs';
+import { cookies } from 'next/headers';
 import { v4 as uuidv4 } from 'uuid';
 import { dbOperations } from './database.js';
 
@@ -32,7 +34,7 @@ export async function verifyPassword(password, hash) {
 export async function signup(email, password, name = 'User') {
   try {
     // Check if user already exists
-    const existingUser = dbOperations.getUserByEmail.get(email);
+    const existingUser = await dbOperations.getUserByEmail(email);
     if (existingUser) {
       return { success: false, error: 'Email já está em uso' };
     }
@@ -50,7 +52,7 @@ export async function signup(email, password, name = 'User') {
     const userId = uuidv4();
     const passwordHash = await hashPassword(password);
     
-    dbOperations.createUser.run(userId, email, passwordHash, name);
+    await dbOperations.createUser(userId, email, passwordHash, name);
     
     const user = { id: userId, email, name };
     return { success: true, user };
@@ -64,12 +66,12 @@ export async function signup(email, password, name = 'User') {
  * Login user
  * @param {string} email 
  * @param {string} password 
- * @returns {Promise<{success: boolean, error?: string, user?: Object}>}
+ * @returns {Promise<{success: boolean, error?: string}>}
  */
 export async function login(email, password) {
   try {
     // Find user
-    const user = dbOperations.getUserByEmail.get(email);
+    const user = await dbOperations.getUserByEmail(email);
     if (!user) {
       return { success: false, error: 'Credenciais inválidas' };
     }
@@ -80,14 +82,16 @@ export async function login(email, password) {
       return { success: false, error: 'Credenciais inválidas' };
     }
 
-    return { 
-      success: true, 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        name: user.name 
-      } 
-    };
+    // Create session and set cookie
+    const sessionId = await createSession(user.id);
+    cookies().set('session', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    return { success: true };
   } catch (error) {
     console.error('Login error:', error);
     return { success: false, error: 'Erro interno do servidor' };
@@ -99,31 +103,31 @@ export async function login(email, password) {
  * @param {string} userId 
  * @returns {string} sessionId
  */
-export function createSession(userId) {
+export async function createSession(userId) {
   const sessionId = uuidv4();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
   
-  dbOperations.createSession.run(sessionId, userId, expiresAt.toISOString());
+  await dbOperations.createSession(sessionId, userId, expiresAt.toISOString().slice(0, 19).replace('T', ' '));
   return sessionId;
 }
 
 /**
  * Get session
  * @param {string} sessionId 
- * @returns {Object|null}
+ * @returns {Promise<Object|null>}
  */
-export function getSession(sessionId) {
+export async function getSession(sessionId) {
   if (!sessionId) return null;
-  return dbOperations.getSession.get(sessionId);
+  return dbOperations.getSession(sessionId);
 }
 
 /**
  * Delete session
  * @param {string} sessionId 
  */
-export function deleteSession(sessionId) {
+export async function deleteSession(sessionId) {
   if (sessionId) {
-    dbOperations.deleteSession.run(sessionId);
+    await dbOperations.deleteSession(sessionId);
   }
 }
 
@@ -132,11 +136,11 @@ export function deleteSession(sessionId) {
  * @param {Request} request 
  * @returns {Object|null}
  */
-export function getCurrentUser(request) {
+export async function getCurrentUser(request) {
   const sessionId = request.cookies.get('session')?.value;
   if (!sessionId) return null;
   
-  const session = getSession(sessionId);
+  const session = await getSession(sessionId);
   return session ? {
     id: session.user_id,
     email: session.email,

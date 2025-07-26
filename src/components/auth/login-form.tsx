@@ -18,9 +18,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { login } from '@/lib/auth'; // Mock auth function
+import { login } from '@/lib/auth';
 import { Icons } from '@/components/icons';
-import { cn } from '@/lib/utils'; // cn was used by the local spinner, ensure it's here if needed elsewhere or remove if not.
 
 const loginFormSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
@@ -50,11 +49,10 @@ export function LoginForm() {
     if (result.success) {
       toast({
         title: 'Login bem-sucedido!',
-        description: 'Redirecionando para o dashboard...',
-        variant: 'default',
+        description: 'Você será redirecionado para o dashboard.',
       });
       router.push('/dashboard');
-      router.refresh(); // Important to re-trigger middleware or server components
+      router.refresh(); 
     } else {
       toast({
         title: 'Erro no Login',
@@ -102,7 +100,7 @@ export function LoginForm() {
         <p className="text-center text-sm text-muted-foreground">
           Não tem uma conta?{' '}
           <Link href="/signup" className="font-medium text-primary hover:underline">
-            Cadastre-se
+            Criar conta
           </Link>
         </p>
       </form>
