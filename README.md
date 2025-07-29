@@ -72,12 +72,12 @@ Open [http://localhost:9002](http://localhost:9002) in your browser.
 ## 🔑 **Default Accounts**
 
 ### Admin Account
-- **Email:** admin@investja.com
+- **Email:** adminapp@investja.money
 - **Password:** admin123!@#
 - **Role:** Administrator with full access
 
 ### Demo Account  
-- **Email:** demo@investja.com
+- **Email:** demoapp@investja.money
 - **Password:** demo123!@#
 - **Role:** Regular user with sample data
 
@@ -259,8 +259,8 @@ This project is proprietary software. All rights reserved.
 ## 🆘 **Support**
 
 For technical support or business inquiries:
-- Email: support@investja.com
-- Documentation: [docs.investja.com](https://docs.investja.com)
+- Email: supportapp@investja.money
+- Documentation: [docs.investja.money](https://docs.investja.money)
 - Issues: Create an issue in this repository
 
 ---

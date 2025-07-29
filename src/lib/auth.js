@@ -34,7 +34,7 @@ export async function verifyPassword(password, hash) {
 export async function signup(email, password, name = 'User') {
   try {
     // Check if user already exists
-    const existingUser = await dbOperations.getUserByEmail(email);
+    const existingUser = dbOperations.getUserByEmail.get(email);
     if (existingUser) {
       return { success: false, error: 'Email já está em uso' };
     }
@@ -52,7 +52,7 @@ export async function signup(email, password, name = 'User') {
     const userId = uuidv4();
     const passwordHash = await hashPassword(password);
     
-    await dbOperations.createUser(userId, email, passwordHash, name);
+    dbOperations.createUser.run(userId, email, passwordHash, name);
     
     const user = { id: userId, email, name };
     return { success: true, user };
@@ -71,7 +71,7 @@ export async function signup(email, password, name = 'User') {
 export async function login(email, password) {
   try {
     // Find user
-    const user = await dbOperations.getUserByEmail(email);
+    const user = dbOperations.getUserByEmail.get(email);
     if (!user) {
       return { success: false, error: 'Credenciais inválidas' };
     }
@@ -100,50 +100,64 @@ export async function login(email, password) {
 
 /**
  * Create a session
- * @param {string} userId 
+ * @param {string} userId
  * @returns {string} sessionId
  */
 export async function createSession(userId) {
   const sessionId = uuidv4();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-  
-  await dbOperations.createSession(sessionId, userId, expiresAt.toISOString().slice(0, 19).replace('T', ' '));
+
+  dbOperations.createSession.run(sessionId, userId, expiresAt.toISOString());
   return sessionId;
 }
 
 /**
  * Get session
- * @param {string} sessionId 
- * @returns {Promise<Object|null>}
+ * @param {string} sessionId
+ * @returns {Object|null}
  */
 export async function getSession(sessionId) {
   if (!sessionId) return null;
-  return dbOperations.getSession(sessionId);
+  return dbOperations.getSession.get(sessionId);
 }
 
 /**
  * Delete session
- * @param {string} sessionId 
+ * @param {string} sessionId
  */
 export async function deleteSession(sessionId) {
   if (sessionId) {
-    await dbOperations.deleteSession(sessionId);
+    dbOperations.deleteSession.run(sessionId);
   }
 }
 
 /**
  * Get current user from request
- * @param {Request} request 
  * @returns {Object|null}
  */
-export async function getCurrentUser(request) {
-  const sessionId = request.cookies.get('session')?.value;
+export async function getCurrentUser() {
+  const cookieStore = cookies();
+  const sessionId = cookieStore.get('session')?.value;
   if (!sessionId) return null;
-  
+
   const session = await getSession(sessionId);
-  return session ? {
+  if (!session) return null;
+
+  return {
     id: session.user_id,
     email: session.email,
     name: session.name
-  } : null;
+  };
+}
+
+/**
+ * Logout user
+ */
+export async function logout() {
+  const cookieStore = cookies();
+  const sessionId = cookieStore.get('session')?.value;
+  if (sessionId) {
+    await deleteSession(sessionId);
+    cookieStore.delete('session');
+  }
 }

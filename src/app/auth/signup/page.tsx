@@ -2,8 +2,8 @@ import { SignupForm } from '@/components/auth/signup-form';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cadastro',
-  description: 'Crie sua conta no Crédito Simples.',
+  title: 'Criar Conta',
+  description: 'Crie uma nova conta para começar a usar o Crédito Simples.',
 };
 
 export default function SignupPage() {

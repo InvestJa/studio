@@ -23,7 +23,7 @@ export function UserNav() {
   const handleLogout = async () => {
     await logout();
     toast({ title: "Logout realizado com sucesso!" });
-    router.push("/login");
+    router.push("/auth/login");
     router.refresh();
   };
 

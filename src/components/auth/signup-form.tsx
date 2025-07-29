@@ -56,7 +56,7 @@ export function SignupForm() {
         title: 'Cadastro realizado com sucesso!',
         description: 'Você será redirecionado para o dashboard.',
       });
-      router.push('/dashboard');
+      router.push('/');
       router.refresh();
     } else {
       toast({
@@ -117,7 +117,7 @@ export function SignupForm() {
         </Button>
          <p className="text-center text-sm text-muted-foreground">
           Já tem uma conta?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href="/auth/login" className="font-medium text-primary hover:underline">
             Entrar
           </Link>
         </p>

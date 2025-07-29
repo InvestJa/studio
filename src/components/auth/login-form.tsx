@@ -51,7 +51,7 @@ export function LoginForm() {
         title: 'Login bem-sucedido!',
         description: 'Você será redirecionado para o dashboard.',
       });
-      router.push('/dashboard');
+      router.push('/');
       router.refresh(); 
     } else {
       toast({
@@ -99,7 +99,7 @@ export function LoginForm() {
         </Button>
         <p className="text-center text-sm text-muted-foreground">
           Não tem uma conta?{' '}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
+          <Link href="/auth/signup" className="font-medium text-primary hover:underline">
             Criar conta
           </Link>
         </p>
